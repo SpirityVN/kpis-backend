@@ -8,7 +8,7 @@ export class SignInDTO {
   @ApiProperty({
     default: 'epvh1o2qnao@temporary-mail.net',
   })
-  nonce: string;
+  nonce: number;
   @ApiProperty({
     default: '',
   })

@@ -17,10 +17,7 @@ interface VerifyNonce {
 export class AuthService {
   @InjectRepository(UserEntity)
   private readonly userRepo: Repository<UserEntity>;
-  constructor(
-
-    private jwtService: JwtService,
-  ){}
+  constructor(private jwtService: JwtService) {}
 
   async verifyNonce({ message, address, signature }: VerifyNonce) {
     try {
@@ -49,30 +46,33 @@ export class AuthService {
     return result[0].user_nonce;
   }
   async signIn(data: SignInDTO): Promise<any> {
+    let result = await this.userRepo
+      .createQueryBuilder('user')
+      .where('user.publicAddress = :publicAddress', {
+        publicAddress: data.publicAddress,
+      })
+      .getOne();
+    if (result.nonce !== data.nonce)
+      throw new HttpException('Nonce Invalid', HttpStatus.BAD_REQUEST);
+    if (!ethers.utils.isAddress(data.publicAddress))
+      throw new HttpException('Address Invalid', HttpStatus.BAD_REQUEST);
     const msg = `Hi! you will connect to server KPIS.\n\nNonce:\n${data.nonce}`;
-    console.log(msg);
     let isSuccess = await this.verifyNonce({
       message: msg,
       address: data.publicAddress,
       signature: data.signature,
     });
     if (isSuccess) {
-      let result = await this.userRepo
-        .createQueryBuilder('user')
-        .where('user.publicAddress = :publicAddress', {
-          publicAddress: data.publicAddress,
-        })
-        .getOne();
       result.nonce = Math.floor(Math.random() * 1000000);
       const date = new Date();
       const payload: JwtPayload = {
-          iat: date.getTime(),
-          sub: result.userId
-      }
+        iat: date.getTime(),
+        sub: result.userId,
+      };
       this.userRepo.save(result);
       return {
-          access_token : this.jwtService.sign(payload)
-      }
+        access_token: this.jwtService.sign(payload),
+      };
     } else {
       throw new HttpException('Message invalid', HttpStatus.UNAUTHORIZED);
     }
