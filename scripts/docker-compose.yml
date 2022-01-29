@@ -12,3 +12,6 @@ services:
          MYSQL_USER: 'user'
          MYSQL_PASSWORD: 'password'
          MYSQL_ROOT_PASSWORD: 'password'
+   volumes:
+         # - ./mysql-data:/var/lib/mysql # uncomment to persist data to mysql-data folder
+         - ./mysql-init:/docker-entrypoint-initdb.d
