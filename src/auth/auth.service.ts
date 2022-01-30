@@ -27,7 +27,10 @@ export class AuthService {
       return false;
     }
   }
+  
   async getNonce(address: string): Promise<number> {
+    if (!ethers.utils.isAddress(address))
+      throw new HttpException('Address Invalid', HttpStatus.BAD_REQUEST);
     let result = await this.userRepo
       .createQueryBuilder('user')
       .where('user.publicAddress = :publicAddress', {
